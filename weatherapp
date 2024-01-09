@@ -1,0 +1,86 @@
+import tkinter as tk
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+import datetime
+
+# 2つの天気予報サイトのURLを取得
+# 東京の天気
+html_yahoo = urlopen('https://weather.yahoo.co.jp/weather/jp/13/4410.html')
+html_tenkijp = urlopen('https://tenki.jp/forecast/3/16/4410/13101/')
+bs_Y = BeautifulSoup(html_yahoo, 'html.parser')
+bs_T = BeautifulSoup(html_tenkijp, 'html.parser')
+
+# Yahoo天気
+fc = bs_Y.find(class_ = 'forecastCity')
+fc = [i.strip() for i in fc.text.splitlines()] # リストで取得
+fc = [i for i in fc if i != ""]
+Y_weather = fc[1]
+Y_high = fc[2]
+Y_low = fc[3]
+
+# tenki.jp
+T_weather = bs_T.select('.weather-telop')[0].text.strip()
+high_temp = bs_T.select("[class='high-temp temp']")[0]
+high_temp_diff = bs_T.select("[class='high-temp tempdiff']")[0]
+low_temp = bs_T.select("[class='low-temp temp']")[0]
+low_temp_diff = bs_T.select("[class='low-temp tempdiff']")[0]
+T_high = high_temp.text.strip() + high_temp_diff.text.strip()
+T_low = low_temp.text.strip() + low_temp_diff.text.strip()
+
+
+# メイン関数
+def main():
+    root = tk.Tk()
+    root.option_add('*font', 'ＭＳゴシック 16')
+    root.title("今日の天気(東京地方)")
+    root.configure(bg='skyblue')
+    ww = WidgetsWindow(root)
+    root.mainloop()
+
+# 「ウィジェットを並べたウィンドウ」クラス
+class WidgetsWindow():
+    # 作成
+    def __init__(self, root):
+
+        self.tf = tk.Frame(root)    # トップレベルのフレーム
+        self.tf.grid(column = 0, row = 0, padx = 15, pady = 15)
+# 今日の日付
+        t = datetime.date.today()
+        today = str(t.month) + '月' + str(t.day) + '日'
+        self.label = tk.Label(self.tf, text = today)
+        self.label.grid(column = 0, row = 0, sticky = 'w')
+# 天気、最高気温、最低気温のラベル
+        textlist = ['天気', '最高気温', '最低気温']
+        for i in range(3):
+             self.label = tk.Label(self.tf, text = textlist[i])
+             self.label.grid(column = 0, row = i+2, sticky = 'w')
+
+        def display(list, col):
+            for i in range(3):
+                self.entVar = tk.StringVar()    # コントロール変数
+                self.entVar.set(list[i])
+                self.ent = tk.Entry(self.tf, textvariable = self.entVar)
+                self.ent.bind('<Return>')
+                self.ent.grid(column = col, row = i+2)
+
+# Yahoo天気の情報
+        self.label = tk.Label(self.tf, text = 'Yahoo!天気')
+        self.label.grid(column = 1, row = 1, sticky = 'w')
+        Ylist = [Y_weather, Y_high, Y_low]
+        display(Ylist, 1)
+
+# tenki.jpの情報
+        self.label = tk.Label(self.tf, text = 'tenki.jp')
+        self.label.grid(column = 2, row = 1, sticky = 'w')
+        Tlist = [T_weather, T_high, T_low]
+        display(Tlist, 2)
+
+if __name__ == '__main__':
+    main()
+
+'''
+参考サイト
+https://ishi-tech.biz/python-scraping-yahoo-weather/
+https://arakoki70.com/?p=7459
+
+'''
